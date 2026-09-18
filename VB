@@ -1,61 +1,45 @@
 #If VBA7 Then
     ' 64-bit Windows API declarations
     Private Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
-    Private Declare PtrSafe Function GetCursorPos Lib "user32" (ByRef lpPoint As POINTAPI) As Long
-    Private Declare PtrSafe Function SetCursorPos Lib "user32" (ByVal x As Long, ByVal y As Long) As Long
+    Private Declare PtrSafe Sub mouse_event Lib "user32" (ByVal dwFlags As Long, ByVal dx As Long, ByVal dy As Long, ByVal cButtons As Long, ByVal dwExtraInfo As Long)
 #Else
     ' 32-bit Windows API declarations
     Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
-    Private Declare Function GetCursorPos Lib "user32" (ByRef lpPoint As POINTAPI) As Long
-    Private Declare Function SetCursorPos Lib "user32" (ByVal x As Long, ByVal y As Long) As Long
+    Private Declare Sub mouse_event Lib "user32" (ByVal dwFlags As Long, ByVal dx As Long, ByVal dy As Long, ByVal cButtons As Long, ByVal dwExtraInfo As Long)
 #End If
 
-Private Type POINTAPI
-    x As Long
-    y As Long
-End Type
+' Windows Constants for Mouse Clicks
+Private Const MOUSEEVENTF_LEFTDOWN As Long = &H2
+Private Const MOUSEEVENTF_LEFTUP As Long = &H4
 
 Dim IsRunning As Boolean
 
-' START THE JIGGLER
-Sub StartJiggler()
-    Dim HoldPos As POINTAPI
-    Dim Toggle As Boolean
-    
+' START THE CLICKER
+Sub StartClicker()
     If IsRunning Then
-        MsgBox "Jiggler is already running!", vbInformation
+        MsgBox "Clicker is already running!", vbInformation
         Exit Sub
     End If
     
     IsRunning = True
-    Toggle = True
     
     Do While IsRunning
-        ' 1. Get the current physical mouse position
-        Call GetCursorPos(HoldPos)
+        ' 1. Simulate a Left Mouse Click (Down then Up) at current position
+        Call mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+        Call mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
         
-        ' 2. Nudge the mouse by 1 pixel back and forth
-        If Toggle Then
-            Call SetCursorPos(HoldPos.x + 1, HoldPos.y)
-        Else
-            Call SetCursorPos(HoldPos.x - 1, HoldPos.y)
-        End If
-        
-        Toggle = Not Toggle
-        
-        ' 3. Wait for 3 minutes (180,000 milliseconds)
-        ' Allows Excel to remain responsive during the wait
+        ' 2. Wait for 3 minutes (180 seconds)
         Dim i As Long
         For i = 1 To 180
             If Not IsRunning Then Exit Do
             Sleep 1000 ' Sleep 1 second
-            DoEvents   ' Yield control to Windows so Excel doesn't freeze
+            DoEvents   ' Prevents Excel from freezing, allowing you to stop it
         Next i
     Loop
 End Sub
 
-' STOP THE JIGGLER
-Sub StopJiggler()
+' STOP THE CLICKER
+Sub StopClicker()
     IsRunning = False
-    MsgBox "Mouse Jiggler stopped.", vbInformation
+    MsgBox "Mouse Clicker stopped.", vbInformation
 End Sub
